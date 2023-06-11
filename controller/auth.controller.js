@@ -37,7 +37,9 @@ export const login = async (req, res) => {
           expires: new Date(Date.now() + 20 * 60000),
           httpOnly: true,
         });
-        res.send("Logged In");
+        res.status(200).send("Logged In");
+      } else {
+        res.status(401).send("Incorrect Password");
       }
     }
   } catch (err) {

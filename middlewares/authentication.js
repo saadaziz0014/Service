@@ -16,6 +16,23 @@ export const checkLogin = async (req, res, next) => {
       }
     }
   } catch (err) {
+    res.send("Must be Signed In");
+  }
+};
+
+export const checkAdmin = async (req, res, next) => {
+  try {
+    if (req.body.role == "Admin") {
+      const secret = req.body.secret;
+      if (secret == process.env.SECRET) {
+        next();
+      } else {
+        res.send("Not Allowed");
+      }
+    } else {
+      next();
+    }
+  } catch (err) {
     console.log(err);
   }
 };
