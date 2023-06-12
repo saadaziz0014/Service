@@ -1,5 +1,9 @@
 import User from "../model/user.model.js";
 import bcrypt from "bcryptjs";
+import {
+  attendanceMarked,
+  attendanceReMarked,
+} from "./attendance.controller.js";
 
 export const register = async (req, res) => {
   try {
@@ -37,7 +41,7 @@ export const login = async (req, res) => {
           expires: new Date(Date.now() + 20 * 60000),
           httpOnly: true,
         });
-        res.status(200).send("Logged In");
+        attendanceMarked(req, res);
       } else {
         res.status(401).send("Incorrect Password");
       }
@@ -49,8 +53,11 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
+    const token = req.cookies.loginToken;
+    const result = await User.findOneAndUpdate({ token });
+    req.email = result.email;
     res.clearCookie("loginToken", { path: "/" });
-    res.send("Logout");
+    attendanceReMarked(req, res);
   } catch (err) {
     console.log(err);
   }
