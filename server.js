@@ -6,6 +6,9 @@ import cookieParser from "cookie-parser";
 import "./db.js";
 
 const app = express();
+const loopbackAddress = "127.0.0.1";
+app.set("trust proxy", loopbackAddress);
+
 app.use(express.json());
 app.use(cookieParser());
 

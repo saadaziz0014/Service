@@ -10,17 +10,14 @@ const attendanceSchema = new Schema({
   attendance: {
     type: String,
     enum: ["Present", "Half Day", "Absent"],
+    default: "Absent",
   },
-  time: [
-    {
-      in: {
-        type: Date,
-      },
-      out: {
-        type: Date,
-      },
-    },
-  ],
+  in: {
+    type: String,
+  },
+  out: {
+    type: String,
+  },
 });
 
 export default mongoose.model("Attendance", attendanceSchema);
