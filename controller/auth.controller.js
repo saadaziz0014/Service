@@ -29,6 +29,9 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
+    // if (req.cookies.loginToken) {
+    //   res.status(201).send("You Already Signed in");
+    // }
     const { email, password } = req.body;
     const userF = await User.findOne({ email });
     if (!userF) {

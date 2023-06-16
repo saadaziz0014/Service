@@ -1,4 +1,4 @@
-import { log } from "console";
+import { myIps } from "../helper/data.js";
 import Attendance from "../model/attendance.model.js";
 import { getTime, getLocalIP } from "../helper/utils.js";
 
@@ -8,67 +8,36 @@ export const attendanceMarked = async (req, res) => {
     const email = req.body.email;
     const ip = data.split(":");
     const time = getTime();
+    const day = time.getDate();
     const hours = time.getHours();
     const minutes = time.getMinutes();
-    if (ip[3] == getLocalIP()) {
-      const result = await Attendance.findOne({ email });
-      if (result) {
-        let resultData;
-        if (hours >= 2) {
-          resultData = await Attendance.findOneAndUpdate(
-            { email },
-            {
-              $set: {
-                in: `${hours}:${minutes}`,
-                out: null,
-                attendance: "Absent",
-              },
-            }
-          );
-        } else if (hours >= 12) {
-          resultData = await Attendance.findOneAndUpdate(
-            { email },
-            {
-              $set: {
-                in: `${hours}:${minutes}`,
-                out: null,
-                attendance: "Half Day",
-              },
-            }
-          );
-        }
-        if (resultData) {
-          res.status(201).send("Login and Marked");
-        }
-      } else {
-        let resulty;
-        if (hours >= 2) {
-          resulty = new Attendance({
-            email,
-            attendance: "Absent",
-            in: `${hours}:${minutes}`,
-            out: null,
-          });
-        } else {
-          if (hours >= 12) {
-            resulty = new Attendance({
-              email,
-              attendance: "Half Day",
-              in: `${hours}:${minutes}`,
-              out: null,
-            });
-          }
-        }
-        const resp = await resulty.save();
-        if (resp) {
-          res.status(201).send("Login and Marked");
-        }
-      }
+    const ipSplit = ip[3].split(".");
+    const userIP = `${ipSplit[0]}.${ipSplit[1]}.${ipSplit[2]}`;
+    const inMin = hours * 60 + minutes;
+    if (myIps.includes(userIP)) {
+      req.session.inTimeOffice = inMin;
     } else {
-      res.status(201).send("Logined but Absent Marked");
+      req.session.inTimeRemote = inMin;
     }
+    const result = await Attendance.findOne({ email });
+    let newAtt = {
+      day,
+      totalHours: 0,
+      marked: "Absent",
+    };
+    if (result) {
+      result.attendances.push(newAtt);
+      await result.save();
+    } else {
+      console.log("attendance not in");
+      const att = new Attendance({ email, attendances: [newAtt] });
+      await att.save();
+      console.log("added");
+    }
+    res.status(201).send("In Time Noted");
   } catch (err) {
     console.log(err);
+    res.status(500).send("err");
   }
 };
 
@@ -78,35 +47,22 @@ export const attendanceReMarked = async (req, res) => {
     const time = getTime();
     const hours = time.getHours();
     const minutes = time.getMinutes();
-    const data = await Attendance.findOne({ email });
-    if (data) {
-      let result;
-      const inT = data.in.split(":");
-      if (hours - inT[0] >= 5) {
-        result = await Attendance.findOneAndUpdate(
-          { email },
-          { $set: { out: `${hours}:${minutes}`, attendance: "Present" } }
-        );
-      } else if (hours - inT[0] >= 3) {
-        result = await Attendance.findOneAndUpdate(
-          { email },
-          { $set: { out: `${hours}:${minutes}`, attendance: "Half Day" } }
-        );
-      } else {
-        result = await Attendance.findOneAndUpdate(
-          { email },
-          { $set: { out: `${hours}:${minutes}`, attendance: "Absent" } }
-        );
-      }
-      if (result) {
-        res.status(201).send("Out Noted");
-      } else {
-        res.status(401).send("Error in Updating Out");
-      }
+    const date = time.getDate();
+    const outMin = hours * 60 + minutes;
+    const officeIn = req.session.inTimeOffice;
+    const remoteIn = req.session.inTimeRemote;
+    //const user = await Attendance.findOne({ email });
+    console.log(date);
+    let totalWork;
+    if (officeIn) {
+      totalWork = outMin - officeIn;
+      req.session.officeIn = 0;
     } else {
-      res.status(401).send("Data not Found");
+      totalWork = outMin - remoteIn;
+      req.session.remoteInIn = 0;
     }
+    res.send("kki");
   } catch (error) {
-    console.log(err);
+    console.log(error);
   }
 };
