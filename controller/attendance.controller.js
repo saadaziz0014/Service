@@ -19,20 +19,20 @@ export const attendanceMarked = async (req, res) => {
     } else {
       req.session.inTimeRemote = inMin;
     }
-    const result = await Attendance.findOne({ email });
+    const result = await Attendance.findOne({ email, "attendances.day": day });
+    const resEmail = await Attendance.findOne({ email });
     let newAtt = {
       day,
       totalHours: 0,
       marked: "Absent",
     };
-    if (result) {
-      result.attendances.push(newAtt);
-      await result.save();
-    } else {
-      console.log("attendance not in");
+    if (!resEmail) {
       const att = new Attendance({ email, attendances: [newAtt] });
       await att.save();
-      console.log("added");
+    } else if (result == null) {
+      result.attendances.push(newAtt);
+      console.log("date not today");
+      await result.save();
     }
     res.status(201).send("In Time Noted");
   } catch (err) {
@@ -51,18 +51,33 @@ export const attendanceReMarked = async (req, res) => {
     const outMin = hours * 60 + minutes;
     const officeIn = req.session.inTimeOffice;
     const remoteIn = req.session.inTimeRemote;
-    //const user = await Attendance.findOne({ email });
-    console.log(date);
-    let totalWork;
+    const user = await Attendance.findOne({ email });
+    let totalWork = 0;
+    let inHours = 0;
+    console.log(email);
+    if (user.attendances.day == date) {
+      totalWork = user.attendances.totalHours;
+    }
     if (officeIn) {
-      totalWork = outMin - officeIn;
+      totalWork = totalWork + (outMin - officeIn);
       req.session.officeIn = 0;
     } else {
-      totalWork = outMin - remoteIn;
+      totalWork = totalWork + (outMin - remoteIn);
       req.session.remoteInIn = 0;
     }
-    res.send("kki");
+    inHours = totalWork / 60;
+    if (inHours >= 7.5) {
+      user.attendances.marked = "Present";
+    } else if (inHours >= 5) {
+      user.attendances.marked = "Half Day";
+    } else {
+      user.attendances.marked = "Absent";
+    }
+    user.attendances.totalHours = totalWork;
+    await user.save();
+    res.status(201).send("Marked");
   } catch (error) {
     console.log(error);
+    res.status(500).send("Error");
   }
 };

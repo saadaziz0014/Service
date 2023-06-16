@@ -29,24 +29,25 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    // if (req.cookies.loginToken) {
-    //   res.status(201).send("You Already Signed in");
-    // }
-    const { email, password } = req.body;
-    const userF = await User.findOne({ email });
-    if (!userF) {
-      res.send("User Not Found");
+    if (req.cookies.loginToken) {
+      res.status(201).send("You Already Signed in");
     } else {
-      const resultM = await bcrypt.compare(password, userF.password);
-      if (resultM) {
-        const token = await userF.generateToken();
-        res.cookie("loginToken", token, {
-          expires: new Date(Date.now() + 20 * 60000),
-          httpOnly: true,
-        });
-        attendanceMarked(req, res);
+      const { email, password } = req.body;
+      const userF = await User.findOne({ email });
+      if (!userF) {
+        res.send("User Not Found");
       } else {
-        res.status(401).send("Incorrect Password");
+        const resultM = await bcrypt.compare(password, userF.password);
+        if (resultM) {
+          const token = await userF.generateToken();
+          res.cookie("loginToken", token, {
+            expires: new Date(Date.now() + 20 * 60000),
+            httpOnly: true,
+          });
+          attendanceMarked(req, res);
+        } else {
+          res.status(401).send("Incorrect Password");
+        }
       }
     }
   } catch (err) {
@@ -57,10 +58,14 @@ export const login = async (req, res) => {
 export const logout = async (req, res) => {
   try {
     const token = req.cookies.loginToken;
-    const result = await User.findOneAndUpdate({ token });
-    req.email = result.email;
-    res.clearCookie("loginToken", { path: "/" });
-    attendanceReMarked(req, res);
+    if (!token) {
+      res.status(200).send("You Logged Out");
+    } else {
+      const result = await User.findOne({ token });
+      req.email = result.email;
+      res.clearCookie("loginToken", { path: "/" });
+      attendanceReMarked(req, res);
+    }
   } catch (err) {
     console.log(err);
   }
