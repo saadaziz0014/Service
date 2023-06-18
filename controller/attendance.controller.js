@@ -30,9 +30,8 @@ export const attendanceMarked = async (req, res) => {
       const att = new Attendance({ email, attendances: [newAtt] });
       await att.save();
     } else if (result == null) {
-      result.attendances.push(newAtt);
-      console.log("date not today");
-      await result.save();
+      resEmail.attendances.push(newAtt);
+      await resEmail.save();
     }
     res.status(201).send("In Time Noted");
   } catch (err) {
