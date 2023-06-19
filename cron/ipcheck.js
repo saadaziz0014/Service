@@ -1,7 +1,7 @@
 import cron from "node-cron";
 import { checkIP } from "../controller/attendance.controller";
 
-cron.schedule("*/1 * * * *", async () => {
+cron.schedule("*/30 * * * *", async () => {
   try {
     const req = {};
     const res = {
