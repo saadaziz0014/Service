@@ -1,6 +1,7 @@
 import { myIps } from "../helper/data.js";
 import Attendance from "../model/attendance.model.js";
-import { getTime, getLocalIP } from "../helper/utils.js";
+import { getTime } from "../helper/utils.js";
+import { logout } from "../controller/auth.controller.js";
 
 export const attendanceMarked = async (req, res) => {
   try {
@@ -53,7 +54,6 @@ export const attendanceReMarked = async (req, res) => {
     const user = await Attendance.findOne({ email });
     let totalWork = 0;
     let inHours = 0;
-    console.log(email);
     if (user.attendances.day == date) {
       totalWork = user.attendances.totalHours;
     }
@@ -78,5 +78,20 @@ export const attendanceReMarked = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).send("Error");
+  }
+};
+
+export const checkIP = async (req, res) => {
+  try {
+    console.log("called");
+    const ip = req.ip;
+    if (!myIps.includes(ip)) {
+      logout(req, res);
+    } else {
+      res.status(201).send("Still Connected");
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).send("Server Error");
   }
 };
