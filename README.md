@@ -28,6 +28,9 @@ To install and run the PF-services project, follow these steps:
 3. npm install
 4. npm start
 
+   OR
+Try docker file saadazizdocker/services
+
 ## Usage
 After following the installation steps, you can start using the PF-services project. Here are the available API endpoints:
 
